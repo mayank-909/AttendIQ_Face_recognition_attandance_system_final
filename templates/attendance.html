@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block page_title %}Attendance Records{% endblock %}
+{% block content %}
+{% set mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] %}
+<div style="display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:start;">
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-head-left">
+        <div class="head-icon"><i class="ti ti-search"></i></div>
+        <div><div class="card-title">Search by Date</div></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <form action="/attendance" method="POST">
+        <div class="form-group">
+          <label class="form-label">Select Date</label>
+          <input type="date" name="selected_date" value="{{ selected_date }}" required/>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
+          <i class="ti ti-search"></i> Search
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-head-left">
+        <div class="head-icon" style="background:var(--green-l);color:var(--green);"><i class="ti ti-calendar-stats"></i></div>
+        <div><div class="card-title">Monthly Export</div><div class="card-sub">Download full month attendance</div></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label class="form-label">Select Month</label>
+        <select id="month-pick" style="height:38px;width:100%;padding:0 12px;border:1px solid var(--border2);border-radius:var(--rsm);font-family:inherit;font-size:13.5px;color:var(--text);background:var(--white);outline:none;">
+          <option value="">-- Select Month --</option>
+          {% for m in available_months %}
+          <option value="{{ m }}">{{ mn[m[5:7]|int - 1] }} {{ m[:4] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <a href="#" onclick="doMonthlyExport(event)" class="btn btn-success" style="width:100%;justify-content:center;">
+        <i class="ti ti-file-spreadsheet"></i> Export Monthly Excel
+      </a>
+    </div>
+  </div>
+
+  <div class="card" style="grid-column:{% if attendance_data or no_data %}1 / -1{% else %}1{% endif %};">
+    <div class="card-head">
+      <div class="card-head-left">
+        <div class="head-icon"><i class="ti ti-list-check"></i></div>
+        <div>
+          <div class="card-title">{% if selected_date %}Attendance - {{ selected_date }}{% else %}Attendance Records{% endif %}</div>
+          <div class="card-sub">{% if attendance_data %}{{ attendance_data|length }} student(s) present{% else %}Select a date to view records{% endif %}</div>
+        </div>
+      </div>
+      {% if selected_date %}
+      <div style="display:flex;gap:8px;align-items:center;">
+        {% if attendance_data %}<span class="badge badge-green"><i class="ti ti-check"></i> {{ attendance_data|length }} present</span>{% endif %}
+        <a href="/export/excel?date={{ selected_date }}" class="btn btn-success" style="height:32px;font-size:12px;padding:0 12px;"><i class="ti ti-file-spreadsheet"></i> Export Excel</a>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if no_data %}
+    <div class="card-body"><div class="alert alert-warning"><i class="ti ti-alert-triangle"></i> No records found for {{ selected_date }}.</div></div>
+    {% elif attendance_data %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Student Name</th><th>Time</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for row in attendance_data %}
+          <tr>
+            <td style="color:var(--faint);font-size:12px;">{{ loop.index }}</td>
+            <td><div style="display:flex;align-items:center;gap:10px;"><div class="name-av">{{ row[0][0]|upper }}</div><span style="font-weight:600;">{{ row[0]|title }}</span></div></td>
+            <td><span class="badge badge-blue"><i class="ti ti-clock"></i> {{ row[1] }}</span></td>
+            <td><span class="badge badge-green"><i class="ti ti-check"></i> Present</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty">
+      <div class="empty-icon"><i class="ti ti-calendar"></i></div>
+      <h3>Select a date</h3>
+      <p>Use the date picker on the left to view attendance records</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+function doMonthlyExport(e) {
+  e.preventDefault();
+  var m = document.getElementById("month-pick").value;
+  if (!m) { alert("Please select a month first."); return; }
+  window.location.href = "/export/monthly?month=" + m;
+}
+</script>
+{% endblock %}

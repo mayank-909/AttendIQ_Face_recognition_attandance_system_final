@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AttendIQ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --white:#fff;--bg:#f1f5f9;--border:#e2e8f0;--border2:#cbd5e1;
+      --text:#0f172a;--muted:#64748b;--faint:#94a3b8;
+      --blue:#2563eb;--blue-l:#eff6ff;--blue-m:#bfdbfe;
+      --green:#059669;--green-l:#ecfdf5;--green-m:#a7f3d0;
+      --amber:#d97706;--amber-l:#fffbeb;
+      --red:#dc2626;--red-l:#fef2f2;--red-m:#fecaca;
+      --indigo:#4338ca;--r:10px;--rsm:6px;
+      --sidebar-bg:#0f172a;
+      --sidebar-border:rgba(255,255,255,0.06);
+      --sidebar-hover:rgba(255,255,255,0.07);
+      --sidebar-active:rgba(37,99,235,0.25);
+      --sidebar-text:rgba(255,255,255,0.65);
+      --sidebar-text-active:#fff;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+    .layout{display:flex;min-height:100vh}
+
+    /* ── SIDEBAR ── */
+    .sidebar{
+      width:248px;
+      background:var(--sidebar-bg);
+      display:flex;flex-direction:column;
+      position:fixed;top:0;left:0;bottom:0;z-index:50;
+    }
+
+    /* Logo */
+    .sidebar-logo{
+      padding:22px 20px 18px;
+      border-bottom:1px solid var(--sidebar-border,#e2e8f0);
+      display:flex;align-items:center;gap:12px;
+    }
+    .logo-icon{
+      width:36px;height:36px;
+      background:linear-gradient(135deg,#3b82f6,#2563eb);
+      border-radius:10px;
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-size:18px;flex-shrink:0;
+      box-shadow:0 4px 12px rgba(37,99,235,0.4);
+    }
+    .logo-text{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;color:#fff;letter-spacing:-.3px}
+    .logo-text span{color:#60a5fa}
+    .logo-version{font-size:10px;font-weight:600;background:rgba(96,165,250,.15);color:#60a5fa;padding:2px 7px;border-radius:20px;margin-left:4px;letter-spacing:.5px}
+
+    /* Nav */
+    .sidebar-nav{padding:16px 12px;flex:1;overflow-y:auto}
+    .sidebar-nav::-webkit-scrollbar{width:4px}
+    .sidebar-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
+
+    .nav-section{margin-bottom:6px}
+    .nav-label{
+      font-size:10px;font-weight:700;
+      color:rgba(255,255,255,.3);
+      text-transform:uppercase;letter-spacing:1.5px;
+      padding:12px 12px 6px;
+      display:flex;align-items:center;gap:8px;
+    }
+    .nav-label::after{
+      content:'';flex:1;height:1px;
+      background:rgba(255,255,255,.06);
+    }
+
+    .nav-item{
+      display:flex;align-items:center;gap:11px;
+      padding:10px 12px;
+      border-radius:8px;
+      color:var(--sidebar-text);
+      font-size:13.5px;font-weight:500;
+      text-decoration:none;
+      margin-bottom:2px;
+      transition:all .18s;
+      position:relative;
+    }
+    .nav-item-icon{
+      width:32px;height:32px;
+      border-radius:8px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:16px;
+      background:rgba(255,255,255,.06);
+      color:rgba(255,255,255,.5);
+      flex-shrink:0;
+      transition:all .18s;
+    }
+    .nav-item:hover{
+      background:var(--sidebar-hover);
+      color:#fff;
+    }
+    .nav-item:hover .nav-item-icon{
+      background:rgba(255,255,255,.1);
+      color:#fff;
+    }
+    .nav-item.active{
+      background:var(--sidebar-active);
+      color:var(--sidebar-text-active);
+      font-weight:600;
+    }
+    .nav-item.active .nav-item-icon{
+      background:rgba(37,99,235,.5);
+      color:#93c5fd;
+    }
+    .nav-item.active::before{
+      content:'';
+      position:absolute;left:0;top:50%;transform:translateY(-50%);
+      width:3px;height:20px;
+      background:#3b82f6;
+      border-radius:0 3px 3px 0;
+    }
+
+    /* Footer */
+    .sidebar-footer{padding:14px;border-top:1px solid var(--sidebar-border,#e2e8f0)}
+    .user-card{
+      display:flex;align-items:center;gap:10px;
+      padding:10px 12px;border-radius:8px;
+      background:rgba(255,255,255,.05);
+      cursor:pointer;transition:background .15s;
+    }
+    .user-card:hover{background:rgba(255,255,255,.08)}
+    .av{
+      width:32px;height:32px;border-radius:50%;
+      background:linear-gradient(135deg,#3b82f6,#6366f1);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-size:12px;font-weight:700;flex-shrink:0;
+    }
+    .user-name{font-size:13px;font-weight:600;color:#fff}
+    .user-role{font-size:11px;color:rgba(255,255,255,.4)}
+
+    /* ── MAIN ── */
+    .main{margin-left:248px;flex:1;min-width:0}
+    .topbar{
+      background:var(--white);
+      border-bottom:1px solid var(--border);
+      padding:0 28px;height:58px;
+      display:flex;align-items:center;justify-content:space-between;
+      position:sticky;top:0;z-index:40;
+    }
+    .page-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:var(--text)}
+    .topbar-right{display:flex;align-items:center;gap:10px}
+    .badge-live{display:flex;align-items:center;gap:6px;background:var(--green-l);color:var(--green);font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid var(--green-m)}
+    .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+    .icon-btn{width:34px;height:34px;border-radius:var(--rsm);border:1px solid var(--border);background:var(--white);display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;font-size:17px;transition:background .15s;text-decoration:none}
+    .icon-btn:hover{background:var(--bg);color:var(--text)}
+    .content{padding:26px 28px}
+
+    /* ── CARDS ── */
+    .card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+    .card-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+    .card-head-left{display:flex;align-items:center;gap:10px}
+    .head-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;background:linear-gradient(135deg,#eff6ff,#dbeafe);color:var(--blue);flex-shrink:0;box-shadow:0 1px 4px rgba(37,99,235,0.15);}
+    .card-title{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600}
+    .card-sub{font-size:12px;color:var(--faint);margin-top:1px}
+    .card-body{padding:20px}
+
+    /* ── STATS ── */
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+    .stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;position:relative;overflow:hidden}
+    .stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .sc-blue::after{background:linear-gradient(90deg,#2563eb,#60a5fa)}
+    .sc-green::after{background:linear-gradient(90deg,#059669,#34d399)}
+    .sc-amber::after{background:linear-gradient(90deg,#d97706,#fbbf24)}
+    .sc-indigo::after{background:linear-gradient(90deg,#4338ca,#818cf8)}
+    .stat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .stat-label{font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+    .stat-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px}
+    .sc-blue .stat-icon{background:var(--blue-l);color:var(--blue)}
+    .sc-green .stat-icon{background:var(--green-l);color:var(--green)}
+    .sc-amber .stat-icon{background:var(--amber-l);color:var(--amber)}
+    .sc-indigo .stat-icon{background:#eef2ff;color:var(--indigo)}
+    .stat-value{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;line-height:1;margin-bottom:4px}
+    .stat-sub{font-size:11.5px;color:var(--faint)}
+
+    /* ── BUTTONS ── */
+    .btn{display:inline-flex;align-items:center;gap:7px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:0 16px;height:36px;border-radius:var(--rsm);border:none;cursor:pointer;text-decoration:none;transition:opacity .15s,transform .1s;white-space:nowrap}
+    .btn:active{transform:scale(.98)}.btn:hover{opacity:.88}
+    .btn-primary{background:var(--blue);color:#fff}
+    .btn-success{background:var(--green);color:#fff}
+    .btn-danger{background:var(--red);color:#fff}
+    .btn-ghost{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+
+    /* ── BADGES ── */
+    .badge{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:20px}
+    .badge-green{background:var(--green-l);color:var(--green);border:1px solid var(--green-m)}
+    .badge-blue{background:var(--blue-l);color:var(--blue);border:1px solid var(--blue-m)}
+    .badge-amber{background:var(--amber-l);color:var(--amber);border:1px solid #fde68a}
+    .badge-red{background:var(--red-l);color:var(--red);border:1px solid var(--red-m)}
+
+    /* ── ALERTS ── */
+    .alert{display:flex;align-items:center;gap:10px;padding:11px 16px;border-radius:var(--rsm);font-size:13px;font-weight:500}
+    .alert-success{background:var(--green-l);color:var(--green);border:1px solid var(--green-m)}
+    .alert-warning{background:var(--amber-l);color:var(--amber);border:1px solid #fde68a}
+    .alert-danger{background:var(--red-l);color:var(--red);border:1px solid var(--red-m)}
+
+    /* ── TABLE ── */
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse}
+    thead th{background:var(--bg);font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.8px;padding:10px 16px;text-align:left;border-bottom:1px solid var(--border)}
+    tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:hover{background:#f8fafc}
+    td{padding:12px 16px;font-size:13.5px}
+
+    /* ── FORM ── */
+    .form-group{margin-bottom:14px}
+    .form-label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+    input[type=date],input[type=text],input[type=email],input[type=month],select,textarea{width:100%;padding:0 12px;height:38px;border:1px solid var(--border2);border-radius:var(--rsm);font-family:'Inter',sans-serif;font-size:13.5px;color:var(--text);background:var(--white);outline:none;transition:border-color .2s,box-shadow .2s}
+    input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+    textarea{height:auto;padding:10px 12px;resize:vertical}
+
+    /* ── EMPTY ── */
+    .empty{text-align:center;padding:48px 24px;color:var(--faint)}
+    .empty-icon{width:52px;height:52px;margin:0 auto 12px;background:var(--bg);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--border2)}
+    .empty h3{font-size:14px;color:var(--muted);margin-bottom:4px;font-weight:600}.empty p{font-size:12.5px}
+    .name-av{width:30px;height:30px;border-radius:50%;background:var(--blue-l);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+
+    @media(max-width:900px){.sidebar{display:none}.main{margin-left:0}.stats-grid{grid-template-columns:repeat(2,1fr)}.content{padding:18px}.topbar{padding:0 18px}}
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="ti ti-scan-eye"></i></div>
+      <div>
+        <span class="logo-text">Attend<span>IQ</span></span>
+        <span class="logo-version">v2.0</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+
+      <div class="nav-section">
+        <div class="nav-label">Main</div>
+        <a class="nav-item {% if page=='dashboard' %}active{% endif %}" href="/">
+          <div class="nav-item-icon"><i class="ti ti-layout-dashboard"></i></div>
+          Dashboard
+        </a>
+        <a class="nav-item {% if page=='attendance' %}active{% endif %}" href="/attendance">
+          <div class="nav-item-icon"><i class="ti ti-calendar-check"></i></div>
+          Attendance
+        </a>
+        <a class="nav-item {% if page=='students' %}active{% endif %}" href="/students">
+          <div class="nav-item-icon"><i class="ti ti-users-group"></i></div>
+          Students
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Reports</div>
+        <a class="nav-item {% if page=='analytics' %}active{% endif %}" href="/analytics">
+          <div class="nav-item-icon"><i class="ti ti-chart-dots-3"></i></div>
+          Analytics
+        </a>
+        <a class="nav-item" href="/export/all">
+          <div class="nav-item-icon"><i class="ti ti-table-export"></i></div>
+          Export Excel
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">System</div>
+        <a class="nav-item {% if page=='settings' %}active{% endif %}" href="/settings">
+          <div class="nav-item-icon"><i class="ti ti-adjustments-horizontal"></i></div>
+          Settings
+        </a>
+      </div>
+
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="av">AD</div>
+        <div>
+          <div class="user-name">Admin</div>
+          <div class="user-role">Administrator</div>
+        </div>
+        <i class="ti ti-dots-vertical" style="margin-left:auto;color:rgba(255,255,255,.3);font-size:16px;"></i>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="page-title">{% block page_title %}Dashboard{% endblock %}</div>
+      <div class="topbar-right">
+        <div class="badge-live"><div class="live-dot"></div> System Active</div>
+
+        <a class="icon-btn" href="/"><i class="ti ti-home"></i></a>
+        <a class="icon-btn" href="/settings"><i class="ti ti-settings"></i></a>
+      </div>
+    </header>
+    <div class="content">{% block content %}{% endblock %}</div>
+  </div>
+</div>
+
+</body>
+</html>

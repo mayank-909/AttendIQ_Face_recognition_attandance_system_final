@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% block page_title %}Dashboard Overview{% endblock %}
+{% block content %}
+
+<div class="stats-grid">
+  <div class="stat-card sc-blue">
+    <div class="stat-top"><div class="stat-label">Present Today</div><div class="stat-icon"><i class="ti ti-user-check"></i></div></div>
+    <div class="stat-value" id="stat-today">{{ total_today }}</div>
+    <div class="stat-sub">Students marked present</div>
+  </div>
+  <div class="stat-card sc-green">
+    <div class="stat-top"><div class="stat-label">Total Students</div><div class="stat-icon"><i class="ti ti-users"></i></div></div>
+    <div class="stat-value" id="stat-total">{{ total_all }}</div>
+    <div class="stat-sub">Registered in system</div>
+  </div>
+  <div class="stat-card sc-amber">
+    <div class="stat-top"><div class="stat-label">Today's Date</div><div class="stat-icon"><i class="ti ti-calendar"></i></div></div>
+    <div class="stat-value" style="font-size:16px;margin-top:6px;">{{ today }}</div>
+    <div class="stat-sub">Current session</div>
+  </div>
+  <div class="stat-card sc-indigo">
+    <div class="stat-top"><div class="stat-label">System Status</div><div class="stat-icon"><i class="ti ti-cpu"></i></div></div>
+    <div class="stat-value" style="font-size:16px;margin-top:6px;color:var(--indigo);">Online</div>
+    <div class="stat-sub">Face recognition ready</div>
+  </div>
+</div>
+
+<!-- LIVE BANNER -->
+<div id="live-banner" style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:13px;color:#059669;font-weight:600;">
+  <span style="width:8px;height:8px;border-radius:50%;background:#059669;animation:pulse 1.5s infinite;display:inline-block;"></span>
+  <span id="live-msg">Live — watching for attendance updates</span>
+</div>
+
+<!-- CAMERA CONTROLS -->
+<div class="card" style="margin-bottom:18px;border:2px solid var(--blue-m);">
+  <div class="card-head" style="background:var(--blue-l);">
+    <div class="card-head-left">
+      <div class="head-icon" style="background:var(--blue);color:white;"><i class="ti ti-camera"></i></div>
+      <div>
+        <div class="card-title" style="color:var(--blue);">Camera Controls</div>
+        <div class="card-sub">Launch camera directly from dashboard</div>
+      </div>
+    </div>
+    <div id="status-badge" class="badge badge-blue" style="display:none;">
+      <i class="ti ti-loader" id="status-icon"></i>
+      <span id="status-text">Running...</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;">
+
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center;">
+        <div style="width:48px;height:48px;background:var(--blue-l);color:var(--blue);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 12px;">
+          <i class="ti ti-scan-eye"></i>
+        </div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Mark Attendance</div>
+        <div style="font-size:12px;color:var(--faint);margin-bottom:14px;">Opens camera to recognize and log faces</div>
+        <button onclick="launchCamera('attendance')" class="btn btn-primary" style="width:100%;justify-content:center;">
+          <i class="ti ti-player-play"></i> Start Camera
+        </button>
+      </div>
+
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center;">
+        <div style="width:48px;height:48px;background:var(--green-l);color:var(--green);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 12px;">
+          <i class="ti ti-user-plus"></i>
+        </div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Register Student</div>
+        <div style="font-size:12px;color:var(--faint);margin-bottom:14px;">Capture face photos for new student</div>
+        <button onclick="launchCamera('register')" class="btn btn-success" style="width:100%;justify-content:center;">
+          <i class="ti ti-player-play"></i> Open Register
+        </button>
+      </div>
+
+
+
+    </div>
+
+    <div id="toast" style="display:none;margin-top:14px;" class="alert alert-success">
+      <i class="ti ti-circle-check"></i>
+      <span id="toast-msg"></span>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM GRID -->
+<div style="display:grid;grid-template-columns:1fr 320px;gap:18px;">
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-head-left">
+        <div class="head-icon"><i class="ti ti-activity"></i></div>
+        <div><div class="card-title">Recent Activity</div><div class="card-sub">Last 5 attendance entries</div></div>
+      </div>
+      <a href="/attendance" class="btn btn-ghost" style="font-size:12px;height:30px;padding:0 12px;">View All</a>
+    </div>
+    <div style="padding:0;">
+      {% if recent %}
+      <table>
+        <thead><tr><th>Student</th><th>Date</th><th>Time</th><th>Status</th></tr></thead>
+        <tbody id="recent-body">
+          {% for row in recent %}
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="name-av">{{ row[0][0]|upper }}</div>
+                <span style="font-weight:600;">{{ row[0]|title }}</span>
+              </div>
+            </td>
+            <td style="color:var(--muted);">{{ row[2] }}</td>
+            <td><span class="badge badge-blue"><i class="ti ti-clock"></i> {{ row[1] }}</span></td>
+            <td><span class="badge badge-green"><i class="ti ti-check"></i> Present</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty">
+        <div class="empty-icon"><i class="ti ti-clock"></i></div>
+        <h3>No activity yet</h3>
+        <p>Click "Mark Attendance" above to start</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:14px;">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-left">
+          <div class="head-icon" style="background:var(--green-l);color:var(--green);"><i class="ti ti-info-circle"></i></div>
+          <div><div class="card-title">How to Use</div></div>
+        </div>
+      </div>
+      <div class="card-body" style="font-size:13px;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span class="badge badge-blue" style="flex-shrink:0;">1</span>
+          <span style="color:var(--muted);">Click <b>Mark Attendance</b> — camera opens on screen</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span class="badge badge-blue" style="flex-shrink:0;">2</span>
+          <span style="color:var(--muted);">Face detected → blink → attendance auto-logged</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span class="badge badge-blue" style="flex-shrink:0;">3</span>
+          <span style="color:var(--muted);">Press <b>Q</b> on camera window to close</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <span class="badge badge-green" style="flex-shrink:0;">4</span>
+          <span style="color:var(--muted);">Check <b>Attendance</b> page to verify records</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-left">
+          <div class="head-icon" style="background:#eef2ff;color:var(--indigo);"><i class="ti ti-cpu"></i></div>
+          <div><div class="card-title">System Info</div></div>
+        </div>
+      </div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+        <div style="display:flex;justify-content:space-between;padding:8px;background:var(--bg);border-radius:6px;">
+          <span style="color:var(--muted);">Model</span><span style="font-weight:600;">dlib ResNet</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px;background:var(--bg);border-radius:6px;">
+          <span style="color:var(--muted);">Database</span><span style="font-weight:600;">SQLite</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px;background:var(--bg);border-radius:6px;">
+          <span style="color:var(--muted);">Status</span><span class="badge badge-green"><i class="ti ti-check"></i> Active</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var lastToday = -1;
+var lastRecent = '';
+
+function fetchLiveStats() {
+  fetch('/api/live')
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      document.getElementById('stat-today').textContent = data.today;
+      document.getElementById('stat-total').textContent = data.total;
+
+      if (lastToday >= 0 && data.today > lastToday) {
+        var card = document.getElementById('stat-today').closest('.stat-card');
+        card.style.background = '#ecfdf5';
+        setTimeout(function() { card.style.background = ''; }, 1500);
+        document.getElementById('live-msg').textContent = 'New attendance marked! ' + data.latest_name + ' is Present';
+        setTimeout(function() {
+          document.getElementById('live-msg').textContent = 'Live — watching for attendance updates';
+        }, 5000);
+      }
+      lastToday = data.today;
+
+      if (data.recent_html !== lastRecent) {
+        var tbody = document.getElementById('recent-body');
+        if (tbody) tbody.innerHTML = data.recent_html;
+        lastRecent = data.recent_html;
+      }
+    })
+    .catch(function() {});
+}
+
+setInterval(fetchLiveStats, 10000);
+fetchLiveStats();
+
+function launchCamera(type) {
+  var toast = document.getElementById('toast');
+  var toastMsg = document.getElementById('toast-msg');
+  var badge = document.getElementById('status-badge');
+
+  toast.style.display = 'none';
+  badge.style.display = 'flex';
+  document.getElementById('status-text').textContent = 'Launching...';
+
+  fetch('/launch/' + type, { method: 'POST' })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      badge.style.display = 'none';
+      toast.className = 'alert ' + (data.ok ? 'alert-success' : 'alert-warning');
+      toast.querySelector('i').className = 'ti ' + (data.ok ? 'ti-circle-check' : 'ti-alert-triangle');
+      toastMsg.textContent = data.msg;
+      toast.style.display = 'flex';
+      setTimeout(function() { toast.style.display = 'none'; }, 5000);
+    })
+    .catch(function() {
+      badge.style.display = 'none';
+      toastMsg.textContent = 'Failed to launch. Make sure server is running.';
+      toast.className = 'alert alert-danger';
+      toast.style.display = 'flex';
+    });
+}
+</script>
+
+{% endblock %}

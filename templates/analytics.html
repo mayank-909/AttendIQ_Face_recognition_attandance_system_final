@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block page_title %}Analytics{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+
+<div class="stats-grid">
+  <div class="stat-card sc-blue">
+    <div class="stat-top"><div class="stat-label">This Week</div><div class="stat-icon"><i class="ti ti-calendar-week"></i></div></div>
+    <div class="stat-value">{{ daily | sum(attribute='count') }}</div>
+    <div class="stat-sub">Total attendance entries</div>
+  </div>
+  <div class="stat-card sc-green">
+    <div class="stat-top"><div class="stat-label">Today</div><div class="stat-icon"><i class="ti ti-user-check"></i></div></div>
+    <div class="stat-value">{{ total_today }}</div>
+    <div class="stat-sub">Present today</div>
+  </div>
+  <div class="stat-card sc-amber">
+    <div class="stat-top"><div class="stat-label">Peak Day</div><div class="stat-icon"><i class="ti ti-trending-up"></i></div></div>
+    <div class="stat-value">{{ daily | map(attribute='count') | max if daily else 0 }}</div>
+    <div class="stat-sub">Highest attendance this week</div>
+  </div>
+  <div class="stat-card sc-indigo">
+    <div class="stat-top"><div class="stat-label">Students</div><div class="stat-icon"><i class="ti ti-users"></i></div></div>
+    <div class="stat-value">{{ total_all }}</div>
+    <div class="stat-sub">Unique registered students</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;">
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-head-left">
+        <div class="head-icon"><i class="ti ti-chart-bar"></i></div>
+        <div><div class="card-title">Daily Attendance — Last 7 Days</div><div class="card-sub">Number of students per day</div></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <canvas id="dailyChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-head-left">
+        <div class="head-icon" style="background:var(--green-l);color:var(--green);"><i class="ti ti-trophy"></i></div>
+        <div><div class="card-title">Top Students</div><div class="card-sub">Most days present overall</div></div>
+      </div>
+    </div>
+    <div class="card-body" style="padding:0;">
+      {% if top %}
+      <table>
+        <thead><tr><th>Rank</th><th>Student</th><th>Days Present</th></tr></thead>
+        <tbody>
+          {% for row in top %}
+          <tr>
+            <td style="color:var(--faint);font-size:12px;">
+              {% if loop.index == 1 %}<span style="color:#d97706;font-weight:700;">🥇</span>
+              {% elif loop.index == 2 %}<span style="color:#94a3b8;font-weight:700;">🥈</span>
+              {% elif loop.index == 3 %}<span style="color:#b45309;font-weight:700;">🥉</span>
+              {% else %}{{ loop.index }}{% endif %}
+            </td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div class="name-av">{{ row[0][0]|upper }}</div>
+                <span style="font-weight:600;">{{ row[0]|title }}</span>
+              </div>
+            </td>
+            <td><span class="badge badge-green">{{ row[1] }} {{ 'day' if row[1] == 1 else 'days' }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty">
+        <div class="empty-icon"><i class="ti ti-trophy"></i></div>
+        <h3>No data yet</h3><p>Run attendance_taker.py to collect data</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <div class="card-head-left">
+      <div class="head-icon" style="background:#eef2ff;color:var(--indigo);"><i class="ti ti-calendar-stats"></i></div>
+      <div><div class="card-title">Monthly Summary</div><div class="card-sub">Attendance count per month</div></div>
+    </div>
+  </div>
+  <div class="card-body">
+    {% if monthly %}
+    <canvas id="monthlyChart" height="100"></canvas>
+    {% else %}
+    <div class="empty">
+      <div class="empty-icon"><i class="ti ti-chart-line"></i></div>
+      <h3>No monthly data</h3><p>Data will appear after attendance is recorded</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+
+
+<script>
+const blue = '#2563eb', bluel = '#eff6ff', green = '#059669';
+
+const daily = {{ daily | tojson }};
+new Chart(document.getElementById('dailyChart'), {
+  type: 'bar',
+  data: {
+    labels: daily.map(d => d.label),
+    datasets: [{
+      label: 'Students Present',
+      data: daily.map(d => d.count),
+      backgroundColor: blue,
+      borderRadius: 6,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f1f5f9' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+{% if monthly %}
+const monthly = {{ monthly | tojson }};
+new Chart(document.getElementById('monthlyChart'), {
+  type: 'line',
+  data: {
+    labels: monthly.map(m => m.month),
+    datasets: [{
+      label: 'Total Attendance',
+      data: monthly.map(m => m.cnt),
+      borderColor: green,
+      backgroundColor: 'rgba(5,150,105,.08)',
+      tension: 0.4,
+      fill: true,
+      pointBackgroundColor: green,
+      pointRadius: 5,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f1f5f9' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+{% endif %}
+</script>
+{% endblock %}

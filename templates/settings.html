@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+{% block page_title %}Settings{% endblock %}
+{% block content %}
+
+{% if message %}
+<div class="alert alert-{{ message.type }}" style="margin-bottom:18px;">
+  <i class="ti ti-{% if message.type == 'success' %}check{% else %}alert-triangle{% endif %}"></i>
+  {{ message.text }}
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+
+  <!-- LEFT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:14px;">
+
+    <!-- Clear by Date -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-left">
+          <div class="head-icon" style="background:var(--amber-l);color:var(--amber);"><i class="ti ti-calendar-x"></i></div>
+          <div><div class="card-title">Clear Attendance by Date</div><div class="card-sub">Delete all records for a specific date</div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <form method="POST" onsubmit="return confirm('Delete attendance records for this date only?')">
+          <input type="hidden" name="action" value="clear_date"/>
+          <div class="form-group">
+            <label class="form-label">Select Date to Clear</label>
+            <select name="clear_date">
+              <option value="">-- Select a date --</option>
+              {% for d in dates %}
+              <option value="{{ d[0] }}">{{ d[0] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-danger" style="width:100%;justify-content:center;">
+            <i class="ti ti-trash"></i> Delete Date Records
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Clear All -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-left">
+          <div class="head-icon" style="background:var(--red-l);color:var(--red);"><i class="ti ti-database-off"></i></div>
+          <div><div class="card-title">Clear All Records</div><div class="card-sub">Permanently delete all attendance data</div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-danger" style="margin-bottom:14px;">
+          <i class="ti ti-alert-triangle"></i>
+          <span>This action <strong>cannot be undone</strong>. All {{ total_records }} records will be deleted.</span>
+        </div>
+        <form method="POST" onsubmit="return confirm('Delete ALL attendance records permanently?')">
+          <input type="hidden" name="action" value="clear_all"/>
+          <button type="submit" class="btn btn-danger" style="width:100%;justify-content:center;">
+            <i class="ti ti-database-off"></i> Delete All Records
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Export -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-left">
+          <div class="head-icon" style="background:var(--green-l);color:var(--green);"><i class="ti ti-file-export"></i></div>
+          <div><div class="card-title">Export Reports</div><div class="card-sub">Download attendance data</div></div>
+        </div>
+      </div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+        <a href="/export/all" class="btn btn-success" style="width:100%;justify-content:center;">
+          <i class="ti ti-table-export"></i> Download All Records (Excel)
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:14px;">
+
+    <!-- Delete Student -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-left">
+          <div class="head-icon" style="background:var(--red-l);color:var(--red);"><i class="ti ti-user-minus"></i></div>
+          <div><div class="card-title">Delete Student Data</div><div class="card-sub">Remove student or specific date attendance</div></div>
+        </div>
+      </div>
+      <div class="card-body">
+
+        <div id="del-msg" style="display:none;margin-bottom:12px;" class="alert alert-success">
+          <i class="ti ti-check" id="del-msg-icon"></i>
+          <span id="del-msg-text"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Step 1 — Select Student</label>
+          <select id="del-stu-select" style="height:38px;width:100%;padding:0 12px;border:1px solid var(--border2);border-radius:var(--rsm);font-family:inherit;font-size:13.5px;color:var(--text);background:var(--white);outline:none;" onchange="onStudentPick(this.value)">
+            <option value="">-- Select a student --</option>
+            {% for st in registered_students %}
+            <option value="{{ st.name }}">{{ st.name|title }} ({{ st.photos }} photos)</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div id="del-step2" style="display:none;">
+          <label class="form-label" style="margin-top:4px;">Step 2 — Choose Action</label>
+          <div style="display:flex;gap:8px;margin-bottom:14px;">
+            <button id="tab-full-btn" onclick="showTab('full')" class="btn btn-danger" style="flex:1;justify-content:center;">
+              <i class="ti ti-user-x"></i> Delete Student
+            </button>
+            <button id="tab-date-btn" onclick="showTab('date')" class="btn btn-ghost" style="flex:1;justify-content:center;">
+              <i class="ti ti-calendar-x"></i> Delete by Date
+            </button>
+          </div>
+
+          <!-- Full delete -->
+          <div id="panel-full">
+            <div class="alert alert-danger" style="margin-bottom:12px;font-size:13px;">
+              <i class="ti ti-alert-triangle"></i>
+              Removes ALL photos, attendance and email permanently.
+            </div>
+            <button onclick="doDeleteStudent()" class="btn btn-danger" style="width:100%;justify-content:center;">
+              <i class="ti ti-trash"></i> Delete Student Permanently
+            </button>
+          </div>
+
+          <!-- Date delete -->
+          <div id="panel-date" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">Select Date</label>
+              <select id="del-date-pick" style="height:38px;width:100%;padding:0 12px;border:1px solid var(--border2);border-radius:var(--rsm);font-family:inherit;font-size:13.5px;color:var(--text);background:var(--white);outline:none;">
+                <option value="">-- Select date --</option>
+                {% for d in dates %}
+                <option value="{{ d[0] }}">{{ d[0] }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button onclick="doDeleteDate()" class="btn btn-danger" style="width:100%;justify-content:center;">
+              <i class="ti ti-calendar-x"></i> Delete This Date Only
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Register Email -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-left">
+          <div class="head-icon" style="background:var(--blue-l);color:var(--blue);"><i class="ti ti-mail"></i></div>
+          <div><div class="card-title">Register Email</div><div class="card-sub">Add or update student email anytime</div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="email-msg" style="display:none;margin-bottom:12px;" class="alert alert-success">
+          <i class="ti ti-check"></i> <span id="email-msg-text"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Select Student</label>
+          <select id="email-name" style="height:38px;width:100%;padding:0 12px;border:1px solid var(--border2);border-radius:var(--rsm);font-family:inherit;font-size:13.5px;color:var(--text);background:var(--white);outline:none;">
+            <option value="">-- Select Student --</option>
+            {% for st in registered_students %}
+            <option value="{{ st.name }}">{{ st.name|title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="text" id="email-input" placeholder="student@gmail.com"/>
+        </div>
+        <button onclick="saveEmail()" class="btn btn-primary" style="width:100%;justify-content:center;">
+          <i class="ti ti-mail"></i> Save Email
+        </button>
+
+        {% if student_emails %}
+        <div style="margin-top:14px;">
+          <div style="font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">Registered Emails</div>
+          {% for sname, semail in student_emails.items() %}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--bg);border-radius:6px;margin-bottom:4px;font-size:13px;">
+            <span style="font-weight:600;">{{ sname|title }}</span>
+            <span style="color:var(--muted);">{{ semail }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- DB Info -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-left">
+          <div class="head-icon" style="background:var(--green-l);color:var(--green);"><i class="ti ti-database"></i></div>
+          <div><div class="card-title">Database Info</div><div class="card-sub">Current system statistics</div></div>
+        </div>
+      </div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--bg);border-radius:6px;">
+          <span style="color:var(--muted);font-size:13px;">Total Records</span>
+          <span style="font-weight:700;color:var(--blue);">{{ total_records }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--bg);border-radius:6px;">
+          <span style="color:var(--muted);font-size:13px;">Unique Students</span>
+          <span style="font-weight:700;color:var(--green);">{{ total_all }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:10px;background:var(--bg);border-radius:6px;">
+          <span style="color:var(--muted);font-size:13px;">Present Today</span>
+          <span style="font-weight:700;color:var(--indigo);">{{ total_today }}</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var pickedStudent = "";
+
+function onStudentPick(val) {
+  pickedStudent = val;
+  document.getElementById("del-step2").style.display = val ? "block" : "none";
+}
+
+function showTab(tab) {
+  document.getElementById("panel-full").style.display = tab === "full" ? "block" : "none";
+  document.getElementById("panel-date").style.display = tab === "date" ? "block" : "none";
+  document.getElementById("tab-full-btn").className = "btn " + (tab === "full" ? "btn-danger" : "btn-ghost");
+  document.getElementById("tab-full-btn").style.flex = "1";
+  document.getElementById("tab-full-btn").style.justifyContent = "center";
+  document.getElementById("tab-date-btn").className = "btn " + (tab === "date" ? "btn-danger" : "btn-ghost");
+  document.getElementById("tab-date-btn").style.flex = "1";
+  document.getElementById("tab-date-btn").style.justifyContent = "center";
+}
+
+function showDelMsg(ok, text) {
+  var el = document.getElementById("del-msg");
+  el.className = "alert " + (ok ? "alert-success" : "alert-warning");
+  document.getElementById("del-msg-icon").className = "ti " + (ok ? "ti-check" : "ti-alert-triangle");
+  document.getElementById("del-msg-text").textContent = text;
+  el.style.display = "flex";
+}
+
+function doDeleteStudent() {
+  if (!pickedStudent) return;
+  if (!window.confirm("Delete " + pickedStudent + " permanently?\n\nThis removes all photos, attendance and email. Cannot be undone.")) return;
+  fetch("/delete/student", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({name: pickedStudent})
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    showDelMsg(d.ok, d.msg);
+    if (d.ok) { setTimeout(function() { location.reload(); }, 2000); }
+  })
+  .catch(function() { showDelMsg(false, "Error occurred."); });
+}
+
+function doDeleteDate() {
+  if (!pickedStudent) return;
+  var date = document.getElementById("del-date-pick").value;
+  if (!date) { showDelMsg(false, "Please select a date."); return; }
+  if (!window.confirm("Delete attendance of " + pickedStudent + " for " + date + " only?")) return;
+  fetch("/delete/student/date", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({name: pickedStudent, date: date})
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    showDelMsg(d.ok, d.msg);
+    if (d.ok) { setTimeout(function() { location.reload(); }, 2000); }
+  })
+  .catch(function() { showDelMsg(false, "Error occurred."); });
+}
+
+function saveEmail() {
+  var name  = document.getElementById("email-name").value;
+  var email = document.getElementById("email-input").value.trim();
+  var msg   = document.getElementById("email-msg");
+  var msgText = document.getElementById("email-msg-text");
+  if (!name || !email) {
+    msg.className = "alert alert-warning";
+    msgText.textContent = "Please select student and enter email.";
+    msg.style.display = "flex";
+    return;
+  }
+  fetch("/register/email", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({name: name, email: email})
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    msg.className = d.ok ? "alert alert-success" : "alert alert-warning";
+    msgText.textContent = d.ok ? "Email saved for " + name : d.msg;
+    msg.style.display = "flex";
+    if (d.ok) {
+      document.getElementById("email-input").value = "";
+      setTimeout(function() { location.reload(); }, 1500);
+    }
+  })
+  .catch(function() {
+    msgText.textContent = "Error saving email.";
+    msg.style.display = "flex";
+  });
+}
+</script>
+
+{% endblock %}

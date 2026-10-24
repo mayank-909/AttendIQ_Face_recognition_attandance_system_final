@@ -1,0 +1,21 @@
+
+# Local attendance database
+*.db
+
+# Personal face data
+data/data_faces_from_camera/
+data/features_all.csv
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Local secrets
+.env
+.env.*
+
+# Editor files
+.vscode/
+
+# Large dlib model files
+data/data_dlib/*.dat
